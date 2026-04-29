@@ -22,17 +22,64 @@ To all the researchers and developers hustling in the KG-LLM space, have you eve
 
 ## 🥊 The Contender Lineup (Implemented Baselines)
 
-Here are the classic models we are currently/already reproducing (this is a dynamically updated list, feature requests are welcome!):
+Ladies and gentlemen, please welcome your contestants to the stage! 🎙️
 
-### 📌 Category 1: Retriever-based (Knowledge Retrieval Enhancement)
-- [ ] **Graph-RAG** (Baseline description...)
-- [ ] **KAPING** (Knowledge Augmented Language Model...)
+Each baseline is fully implemented under `baselines/<Name>/` and evaluated on **WebQSP** under identical data splits and metrics. Let's meet the cast:
 
-### 📌 Category 2: Reasoning-based (Graph Reasoning Fusion)
-- [ ] **RoG** (Reasoning on Graphs)
-- [ ] **ToG** (Think-on-Graph)
+---
 
-*(💡 Speaker's Note: If there's a specific model you want to see, drop an Issue and let us know!)*
+### 🏛️ Act 1 — The Embedding Pioneers
+*Before transformers ruled the earth, these models showed KG structure could be baked directly into the embedding space.*
+
+| # | Model | Authors | Venue | One-liner |
+|---|-------|---------|-------|-----------|
+| 1 | **KVMem** | Miller, Fisch, Dodge et al. | EMNLP 2016 | The O.G. memory network — look up facts at read time via key-value attention. Simple, interpretable, still competitive. |
+| 2 | **EmbedKGQA** | Saxena, Tripathi & Talukdar | ACL 2020 | Why not just embed the whole KG? Pre-trained RotatE embeddings + a question encoder handle multi-hop QA with pure dot products. |
+| 3 | **NSM** | He, Lan, Jiang et al. | SIGIR 2021 | KGQA as a state machine — the model "walks" the graph by updating a distribution over entities at each hop. Interpretable by design. |
+| 4 | **TransferNet** | Shi, Cao, Hou et al. | EMNLP 2021 | Every relation gets its own transfer matrix. Multi-hop reasoning is a chain of relation-conditioned transforms over entity scores — fast, transparent, elegant. |
+| 5 | **KGT5** | Saxena, Kochsiek & Gemulla | NAACL 2022 | The bridge to the generative era: serialize the local KG subgraph as text, hand it to T5, and let it generate the answer. |
+
+---
+
+### 📡 Act 2 — The Retrieval Veterans
+*Retrieve a question-relevant subgraph first, reason over it second. A two-stage pipeline that aged surprisingly well.*
+
+| # | Model | Authors | Venue | One-liner |
+|---|-------|---------|-------|-----------|
+| 6 | **GraftNet** | Sun, Dhingra, Zaheer et al. | EMNLP 2018 | One of the first to fuse KG triples + Wikipedia passages in a single heterogeneous graph. Structured + unstructured beats either alone. |
+| 7 | **PullNet** | Sun, Bedrax-Weiss & Cohen | EMNLP 2019 | GraftNet's smarter sibling: *iteratively* pulls new evidence from the KG and text at each reasoning step. Dynamic retrieval for dynamic reasoning. |
+| 8 | **SR** | Zhang, Zhang, Yu et al. | ACL 2022 | Deceptively simple: retrieve the right subgraph first, then do cheap in-subgraph reasoning. Achieved SOTA at ACL 2022 with a lean architecture. |
+
+---
+
+### 🤖 Act 3 — The LLM-Only Challengers
+*No KGs, pure language model power. These baselines answer the uncomfortable question: "How much does the KG actually help?"*
+
+| # | Model | Authors | Venue | One-liner |
+|---|-------|---------|-------|-----------|
+| 9 | **FlanT5** | Chung, Hou, Longpre et al. (Google Brain) | JMLR 2024 | The instruction-tuning revolution in one model. Fine-tuned on 1,800+ tasks with CoT data — generalizes to KGQA zero-shot. |
+| 10 | **Alpaca** | Taori, Gulrajani, Zhang et al. (Stanford CRFM) | 2023 | Stanford's scrappy open-source answer to ChatGPT. LLaMA-7B × 52K self-instruct examples. Punches above its weight class. |
+| 11 | **LLaMA 2** | Touvron, Martin, Stone et al. (Meta AI) | arXiv 2023 | Meta goes open-weight. 7B / 13B / 70B variants with RLHF alignment. Our strongest open-source LLM-only baseline. |
+| 12 | **ChatGPT** | OpenAI | 2022 | The model that changed everything. GPT-3.5 Turbo sets the commercial API ceiling — and helps us isolate how much credit the KG truly deserves. |
+
+---
+
+### 🧠 Act 4 — The LLM × KG Fusion Headliners
+*The main event. Parametric knowledge of LLMs meets the structural precision of KGs. This is where the real battle is fought.*
+
+| # | Model | Authors | Venue | One-liner |
+|---|-------|---------|-------|-----------|
+| 13 | **KDCoT** | — | 2023 | Knowledge-Driven Chain-of-Thought: each intermediate reasoning step is anchored to a verifiable KG fact, catching and correcting hallucinations before they cascade. |
+| 14 | **UniKGQA** | Jiang, Zhou, Zhao & Wen (RUC) | ICLR 2023 | One model to rule them all — a single LM jointly handles *which triples are relevant* and *what's the answer* in a unified retrieval-reasoning pipeline. |
+| 15 | **ToG** | Sun, Xu, Tang et al. | ICLR 2024 | Think-on-Graph: the LLM becomes an interactive graph explorer, selecting which relation to traverse at each step. Zero extra training — pure LLM reasoning over a live KG. |
+| 16 | **KGCoT** | — | 2023 | Knowledge Graph Chain-of-Thought: KG triples are injected at each reasoning step, grounding the chain-of-thought in structured evidence rather than parametric memory. |
+| 17 | **RoG** | Luo, Li, Haffari & Pan (Monash + CSIRO) | ICLR 2024 | Reasoning on Graphs: *plan* a relation path first, *retrieve* grounding facts along that path, then *reason* with the LLM. Faithful, interpretable, ICLR 2024 quality. |
+| 18 | **SubgraphRAG** | Li, Miao & Pan | 2024 | "Simple is Effective" — the title says it all. A lightweight triple scorer + compact retrieved subgraph fed to an LLM can match far more complex pipelines. |
+| 19 | **RRP** | Xiao, Zhou, Zhang, Li, Li & Huang | IEEE TKDE 2026 | Reliable Reasoning Path: distills KG-grounded guidance into LLM reasoning via two complementary modules — *semantic paths* (LLM-driven) and *structural paths* (relation-embedding-driven) — for reasoning that is both fluent and structurally faithful. |
+
+---
+
+*(💡 Got a model you want to see added? Drop an Issue and let's make it happen!)*
 
 ## 🛠️ Deployment
 
