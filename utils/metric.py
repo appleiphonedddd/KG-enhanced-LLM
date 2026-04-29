@@ -1,40 +1,16 @@
-import torch
-
-def precision(output, target):
-    with torch.no_grad():
-        pred = torch.argmax(output, dim=1)
-        assert pred.shape[0] == len(target)
-        tp = torch.sum((pred == 1) & (target == 1)).item()
-        fp = torch.sum((pred == 1) & (target == 0)).item()
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-        return precision
+def hits_at_1(pred, golds):
+    """pred: top-1 predicted entity string; golds: list of gold entity strings."""
+    return float(pred in set(golds))
 
 
-def recall(output, target):
-    with torch.no_grad():
-        pred = torch.argmax(output, dim=1)
-        assert pred.shape[0] == len(target)
-        tp = torch.sum((pred == 1) & (target == 1)).item()
-        fp = torch.sum((pred == 1) & (target == 0)).item()
-        recall = tp / (tp + fp) if (tp + fp) > 0 else 0
-        return recall
-
-
-def f1_score(output, target):
-    with torch.no_grad():
-        pred = torch.argmax(output, dim=1)
-        assert pred.shape[0] == len(target)
-        tp = torch.sum((pred == 1) & (target == 1)).item()
-        fp = torch.sum((pred == 1) & (target == 0)).item()
-        fn = torch.sum((pred == 0) & (target == 1)).item()
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    return 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
-
-
-def hitsat1(output, target):
-    with torch.no_grad():
-        pred = torch.argmax(output, dim=1)
-        assert pred.shape[0] == len(target)
-        correct = torch.sum(pred == target).item()
-        return correct / len(target)
+def f1_score(preds, golds):
+    """Set-based F1 between predicted and gold entity sets."""
+    pred_set, gold_set = set(preds), set(golds)
+    if not pred_set or not gold_set:
+        return 0.0
+    tp = len(pred_set & gold_set)
+    precision = tp / len(pred_set)
+    recall = tp / len(gold_set)
+    if precision + recall == 0:
+        return 0.0
+    return 2 * precision * recall / (precision + recall)
