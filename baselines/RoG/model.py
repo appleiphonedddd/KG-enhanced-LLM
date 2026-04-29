@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 class RoGPlanner(nn.Module):
@@ -7,7 +8,7 @@ class RoGPlanner(nn.Module):
 
     def __init__(self, model_name_or_path):
         super().__init__()
-        from transformers import AutoModelForCausalLM, AutoTokenizer
+        
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
         self.llm = AutoModelForCausalLM.from_pretrained(model_name_or_path)
 
