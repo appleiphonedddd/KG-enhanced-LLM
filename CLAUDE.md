@@ -7,20 +7,27 @@ A unified research framework for reproducing and comparing KG-enhanced LLM basel
 ## Project Structure
 
 ```
+main.py                      # CLI entry point — train / eval all baselines
+base/
+    base_trainer.py          # Abstract BaseTrainer (epochs, checkpointing, resume)
+    base_data_loader.py      # BaseDataLoader (train/val split via SubsetRandomSampler)
+trainer/
+    trainer.py               # Trainer(BaseTrainer) — loss, eval loop, lr scheduler
 data_loader/
     base_webqsp_dataset.py   # Base PyTorch Dataset — all baselines inherit from this
-    data_loaders.py          # WebQSPDataLoader (BaseDataLoader wrapper)
+    data_loaders.py          # webqsp_collate + WebQSPDataLoader (base dataset only)
 baselines/
     <MethodName>/
         __init__.py
         dataset.py           # Inherits WebQSPDataset, adds method-specific fields
-        model.py             # Model architecture (to be implemented per baseline)
+        model.py             # Model architecture
 datasets/
     WebQSP/
         WebQSP.train.json    # 3098 questions
         WebQSP.test.json     # 1639 questions
 utils/
     metric.py                # KGQA-specific Hits@1 and F1 (set-based, not classification)
+    util.py                  # prepare_device(n_gpu_use) -> (device, gpu_list)
 ```
 
 ## Baseline Overview
@@ -32,6 +39,37 @@ utils/
 | LLM-only | FlanT5, Alpaca, LLaMA2, ChatGPT | `prompt` (model-specific template) |
 | LLMs+KGs | KDCoT, UniKGQA, ToG, KGCoT, RoG, SubgraphRAG | `triples` / `subgraph` / `beam_paths` / `reasoning_paths` / `scored_triples` |
 | Proposed | ReliableReasoningPath | `semantic_paths` + `structural_paths` |
+
+## CLI — Running Experiments
+
+All baselines are launched through `main.py`:
+
+```sh
+# Train
+python main.py train --baseline <Name> [options]
+
+# Eval
+python main.py eval --baseline <Name> --checkpoint <path> [options]
+```
+
+Key flags:
+
+| Flag | Default | Notes |
+|------|---------|-------|
+| `--baseline` | — | Required. Exact name from `REGISTRY` in `main.py`. |
+| `--train-data` | `datasets/WebQSP/WebQSP.train.json` | |
+| `--test-data` | `datasets/WebQSP/WebQSP.test.json` | |
+| `--preprocessed` | `None` | Single pre-extracted JSON for memories / paths / triples (KVMem, NSM, KDCoT, RRP, …). |
+| `--subgraph` | `None` | Subgraph JSON for retrieval-based baselines (GraftNet, PullNet, SR, UniKGQA, SubgraphRAG). |
+| `--model-name` | model default | HuggingFace model name/path for LLM-based models. |
+| `--epochs` | `10` | |
+| `--lr` | `1e-4` | AdamW. |
+| `--val-split` | `0.1` | Fraction of training data held out for validation. |
+| `--output-dir` | `saved/models` | Checkpoint directory. |
+| `--resume` | `None` | Resume training from a `.pt` checkpoint. |
+| `--n-gpu` | `1` | `0` = CPU. |
+
+`ChatGPT` blocks `train` (API-only); use `eval` without `--checkpoint` instead.
 
 ## Adding a New Baseline
 
@@ -58,6 +96,18 @@ class <Name>Dataset(WebQSPDataset):
 
 2. The preprocessed file is always indexed by `item['id']` (WebQSP question ID, e.g. `"WebQTrn-0"`).
 3. Use `super().__init__()` first, then merge — do **not** override `_parse()` for external data.
+4. Register the new baseline in `main.py` `REGISTRY`:
+
+```python
+'<Name>': (
+    'baselines.<Name>.dataset', '<Name>Dataset',
+    lambda a: {'<dataset_kwarg>': a.<arg>},   # extra kwargs beyond data_path
+    'baselines.<Name>.model',   '<Name>Model',
+    lambda a: {'<model_kwarg>': a.<arg>},     # None values are filtered automatically
+),
+```
+
+5. Implement `model.forward(batch) -> loss` and `model.predict(batch) -> list[list[str]]` (ranked entity MIDs per sample).
 
 ## Base Dataset Fields
 
@@ -92,14 +142,19 @@ f1 = f1_score(all_preds, golds)
 
 ## DataLoader
 
-```python
-from data_loader.data_loaders import WebQSPDataLoader
+`main.py` wraps each baseline dataset in `BaseDataLoader` directly (so method-specific fields are preserved):
 
-loader = WebQSPDataLoader(data_path, batch_size=32)
-# batch is dict-of-lists: {'question': [...], 'answers': [...], ...}
+```python
+from base import BaseDataLoader
+from data_loader.data_loaders import webqsp_collate
+
+loader = BaseDataLoader(dataset, batch_size=32, shuffle=True,
+                        validation_split=0.1, num_workers=1,
+                        collate_fn=webqsp_collate)
+val_loader = loader.split_validation()  # returns a separate DataLoader
 ```
 
-`webqsp_collate` returns `dict[str, list]` — variable-length fields (answers, paths) stay as Python lists, not tensors.
+`webqsp_collate` returns `dict[str, list]` — every field, including method-specific ones, stays as a Python list (no tensors). `WebQSPDataLoader` in `data_loaders.py` is a convenience wrapper for the base dataset only; use `BaseDataLoader` directly when working with baseline-specific datasets.
 
 ## Environment
 

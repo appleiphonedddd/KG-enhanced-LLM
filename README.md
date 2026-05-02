@@ -88,3 +88,83 @@ Create a virtual environment and install the Python libraries:
 ```sh
 conda env create -f env.yaml
 conda activate KG
+```
+
+## 🎮 Running Baselines (`main.py`)
+
+All baselines share a single entry point with two subcommands: **`train`** and **`eval`**.
+
+```
+python main.py {train,eval} --baseline <NAME> [options]
+```
+
+### Quick-start examples
+
+**Train GraftNet** (retrieval-based, needs a prebuilt subgraph file):
+```sh
+python main.py train --baseline GraftNet \
+    --train-data datasets/WebQSP/WebQSP.train.json \
+    --subgraph data/graftnet_subgraphs.json \
+    --vocab-size 30000 --epochs 20 --batch-size 32 --lr 1e-3
+```
+
+**Train NSM** (embedding-based, optional preprocessed hop-entities):
+```sh
+python main.py train --baseline NSM \
+    --train-data datasets/WebQSP/WebQSP.train.json \
+    --preprocessed data/nsm_hop_entities.json \
+    --num-hops 2 --epochs 30
+```
+
+**Train FlanT5** (LLM-only, no extra data needed):
+```sh
+python main.py train --baseline FlanT5 \
+    --model-name google/flan-t5-xl \
+    --epochs 5 --batch-size 8 --lr 5e-5
+```
+
+**Train RRP** (proposed method, requires an LLM path):
+```sh
+python main.py train --baseline RRP \
+    --train-data datasets/WebQSP/WebQSP.train.json \
+    --model-name meta-llama/Llama-2-7b-chat-hf \
+    --preprocessed data/rrp_paths.json \
+    --num-hops 2 --epochs 10
+```
+
+**Evaluate any trained baseline** from a checkpoint:
+```sh
+python main.py eval --baseline GraftNet \
+    --test-data datasets/WebQSP/WebQSP.test.json \
+    --checkpoint saved/models/checkpoint-epoch20.pt \
+    --subgraph data/graftnet_subgraphs.json \
+    --vocab-size 30000
+```
+
+**Evaluate ChatGPT** (zero-shot, no checkpoint needed):
+```sh
+python main.py eval --baseline ChatGPT \
+    --test-data datasets/WebQSP/WebQSP.test.json \
+    --api-key $OPENAI_API_KEY
+```
+
+### Common options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--baseline` | — | **Required.** One of the 19 baseline names above. |
+| `--train-data` | `datasets/WebQSP/WebQSP.train.json` | Training split path. |
+| `--test-data` | `datasets/WebQSP/WebQSP.test.json` | Test split path. |
+| `--preprocessed` | `None` | Pre-extracted JSON for memories / triples / paths (KVMem, NSM, KDCoT, RRP, …). |
+| `--subgraph` | `None` | Pre-extracted subgraph JSON (GraftNet, PullNet, SR, UniKGQA, SubgraphRAG). |
+| `--model-name` | model default | HuggingFace model name/path for LLM-based baselines. |
+| `--epochs` | `10` | Number of training epochs. |
+| `--batch-size` | `32` | Batch size. |
+| `--lr` | `1e-4` | Learning rate (AdamW). |
+| `--val-split` | `0.1` | Fraction of training data held out for validation. |
+| `--n-gpu` | `1` | Number of GPUs (`0` = CPU). |
+| `--output-dir` | `saved/models` | Checkpoint directory. |
+| `--resume` | `None` | Path to a `.pt` checkpoint to resume training from. |
+| `--checkpoint` | `None` | Path to a `.pt` checkpoint to load for eval. |
+
+Run `python main.py train --help` or `python main.py eval --help` for the full option list.
