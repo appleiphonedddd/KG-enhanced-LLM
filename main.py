@@ -1,18 +1,3 @@
-"""
-KG-Enhanced LLM benchmark CLI.
-
-Train:
-  python main.py train --baseline GraftNet \\
-      --train-data datasets/WebQSP/WebQSP.train.json \\
-      --batch-size 32 --epochs 20 --lr 1e-3 \\
-      --subgraph data/graftnet_subgraphs.json
-
-Eval:
-  python main.py eval --baseline FlanT5 \\
-      --test-data datasets/WebQSP/WebQSP.test.json \\
-      --checkpoint saved/checkpoint-epoch10.pt
-"""
-
 import argparse
 import importlib
 import logging
@@ -175,10 +160,6 @@ REGISTRY = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def _load_class(module_path, class_name):
     mod = importlib.import_module(module_path)
     return getattr(mod, class_name)
@@ -203,10 +184,6 @@ def build_model(args):
     kwargs = _filter_none(m_kwargs_fn(args))
     return ModelCls(**kwargs)
 
-
-# ---------------------------------------------------------------------------
-# Commands
-# ---------------------------------------------------------------------------
 
 def cmd_train(args):
     if args.baseline == 'ChatGPT':
@@ -292,10 +269,6 @@ def cmd_eval(args):
     print(f'  F1     : {f1:.4f}')
 
 
-# ---------------------------------------------------------------------------
-# Argument parsing
-# ---------------------------------------------------------------------------
-
 def parse_args():
     parser = argparse.ArgumentParser(
         description='KG-Enhanced LLM benchmark',
@@ -369,10 +342,6 @@ def parse_args():
 
     return parser.parse_args()
 
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
 
 def main():
     args = parse_args()
