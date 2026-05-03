@@ -20,6 +20,10 @@ To all the researchers and developers hustling in the KG-LLM space, have you eve
 - 🐍 **Pythonic & Readable**: Say goodbye to academic spaghetti code. We provide a clean, modular architecture.
 - 🤝 **Open Source Spirit**: Fully open-source under the Apache License Version 2.0. Everyone is welcome to build together!
 
+## 🏗️ Project Architecture
+
+![Architecture](imgs/Architecture.jpeg)
+
 ## 🥊 The Contender Lineup (Implemented Baselines)
 
 Ladies and gentlemen, please welcome your contestants to the stage! 🎙️
@@ -168,3 +172,10 @@ python main.py eval --baseline ChatGPT \
 | `--checkpoint` | `None` | Path to a `.pt` checkpoint to load for eval. |
 
 Run `python main.py train --help` or `python main.py eval --help` for the full option list.
+
+---
+
+Our lab mascot has reviewed every baseline in this repo and approves, She also has opinions about your learning rate
+
+![cat](imgs/cat.webp)
+
